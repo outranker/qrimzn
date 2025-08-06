@@ -1,0 +1,38 @@
+{
+  "name": "qrimzn",
+  "version": "1.0.0",
+  "description": "Simple image processing and modifying library with limited functionality",
+  "type": "module",
+  "source": "src/index.ts",
+  "main": "dist/qrimzn.cjs.js",
+  "module": "dist/qrimzn.esm.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "preconstruct build",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall": "node scripts/install.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/outranker/qrimzn.git"
+  },
+  "keywords": [
+    "qrcode",
+    "image",
+    "resize"
+  ],
+  "author": "Javohir Mirzo",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/outranker/qrimzn/issues"
+  },
+  "homepage": "https://github.com/outranker/qrimzn#readme",
+  "devDependencies": {
+    "@babel/preset-typescript": "^7.27.1",
+    "@preconstruct/cli": "^2.8.12",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "tar": "^7.4.3"
+  }
+}
