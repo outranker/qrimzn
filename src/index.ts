@@ -4,11 +4,18 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// ES module compatibility for __dirname
+const getDirectoryName = () => {
+  if (typeof __dirname !== "undefined") {
+    return __dirname;
+  }
+  return path.dirname(fileURLToPath(import.meta.url));
+};
+
+const currentDir = getDirectoryName();
 
 const binaryPath = path.join(
-  __dirname,
+  currentDir,
   "..",
   "bin",
   process.platform === "win32" ? "qrimzn.exe" : "qrimzn"
@@ -83,7 +90,6 @@ export function resizeImage(
   }
 
   return new Promise((resolve, reject) => {
-    const start = Date.now();
     const proc = spawn(binaryPath, [
       "--type",
       "resize",
@@ -109,8 +115,6 @@ export function resizeImage(
 
     proc.on("close", (code) => {
       if (code === 0) {
-        const end = Date.now();
-        console.log(`resizeImg ${width} took ${end - start} ms`);
         resolve(Buffer.concat(chunks));
       } else {
         reject(new Error(`qrimzn resize exited with code ${code}`));
