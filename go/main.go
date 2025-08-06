@@ -7,15 +7,22 @@ import (
 	"image/color"
 	"image/draw"
 	"image/png"
-	"log"
+	"io"
 	"os"
 
 	_ "embed"
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
 
 	"github.com/skip2/go-qrcode"
+	_ "golang.org/x/image/bmp"
+	xdraw "golang.org/x/image/draw"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/opentype"
 	"golang.org/x/image/math/fixed"
+	_ "golang.org/x/image/tiff"
+	_ "golang.org/x/image/webp"
 )
 
 //go:embed assets/ARIALBD.TTF
@@ -53,24 +60,122 @@ func drawQRWithLabel(qr image.Image, label string, face font.Face) image.Image {
 	return dst
 }
 
+func resizeImage(img image.Image, width int) image.Image {
+	bounds := img.Bounds()
+	originalWidth := bounds.Dx()
+	originalHeight := bounds.Dy()
+
+	// Don't enlarge images
+	if originalWidth <= width {
+		return img
+	}
+
+	// Calculate new height maintaining aspect ratio
+	height := (originalHeight * width) / originalWidth
+
+	// Create new image with calculated dimensions
+	dst := image.NewRGBA(image.Rect(0, 0, width, height))
+
+	// Use BiLinear interpolation for better quality
+	xdraw.BiLinear.Scale(dst, dst.Bounds(), img, bounds, draw.Over, nil)
+
+	return dst
+}
+
+func decodeImage(reader io.Reader) (image.Image, error) {
+	// Try to decode as different formats
+	img, format, err := image.Decode(reader)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode image (supported formats: JPEG, PNG, GIF, BMP, TIFF, WebP): %v", err)
+	}
+
+	fmt.Fprintf(os.Stderr, "Decoded image format: %s\n", format)
+	return img, nil
+}
+
+func generateQRCode(content, code string) error {
+	// Load font
+	face, err := loadEmbeddedFont(100) // 100px like original JS
+	if err != nil {
+		return fmt.Errorf("failed to load font: %v", err)
+	}
+
+	// Generate QR code
+	qr, err := qrcode.New(content, qrcode.Medium)
+	if err != nil {
+		return fmt.Errorf("QR generation failed: %v", err)
+	}
+
+	// Create QR image and add label
+	qrImage := qr.Image(qrSize)
+	final := drawQRWithLabel(qrImage, code, face)
+
+	err = png.Encode(os.Stdout, final)
+	if err != nil {
+		return fmt.Errorf("failed to encode PNG: %v", err)
+	}
+
+	return nil
+}
+
+func resizeImageFromStdin(width int) error {
+	// start := time.Now()
+
+	// Check if stdin has data
+	stat, err := os.Stdin.Stat()
+	if err != nil {
+		return fmt.Errorf("failed to stat stdin: %v", err)
+	}
+	if (stat.Mode() & os.ModeCharDevice) != 0 {
+		return fmt.Errorf("no data provided via stdin (pipe some image data)")
+	}
+
+	fmt.Fprintf(os.Stderr, "Reading image data from stdin...\n")
+
+	// Read image from stdin
+	img, err := decodeImage(os.Stdin)
+	if err != nil {
+		return err
+	}
+
+	// Resize the image
+	resized := resizeImage(img, width)
+
+	// Encode as PNG to stdout
+	err = png.Encode(os.Stdout, resized)
+	if err != nil {
+		return fmt.Errorf("failed to encode resized image: %v", err)
+	}
+
+	// end := time.Now()
+	// log.Printf("resizeImg %d took %d ms", width, end.Sub(start).Milliseconds())
+
+	return nil
+}
+
 func main() {
 	// Define command-line flags
 	var (
+		operationType   = flag.String("type", "qrcode", "Operation type: 'qrcode' or 'resize'")
 		qrcodeContent   = flag.String("content", "https://example.com/index.html?id=ABC12345678&mode=local", "QR code content (URL)")
 		chargepointCode = flag.String("code", "ABC12345678", "Chargepoint code for the label")
+		width           = flag.Int("width", 800, "Target width for image resizing")
 		help            = flag.Bool("help", false, "Show usage information")
 	)
 
 	// Custom usage function
 	flag.Usage = func() {
-		fmt.Fprintf(flag.CommandLine.Output(), "QR Code Generator with Label\n\n")
+		fmt.Fprintf(flag.CommandLine.Output(), "Image Processing Tool (QR Code Generation & Image Resizing)\n\n")
 		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [options]\n\n", os.Args[0])
 		fmt.Fprintf(flag.CommandLine.Output(), "Options:\n")
 		flag.PrintDefaults()
 		fmt.Fprintf(flag.CommandLine.Output(), "\nExamples:\n")
-		fmt.Fprintf(flag.CommandLine.Output(), "  %s --content=\"https://example.com\" --code=\"ABC123\"\n", os.Args[0])
-		fmt.Fprintf(flag.CommandLine.Output(), "  %s --code=\"ABC12345678\"\n", os.Args[0])
-		fmt.Fprintf(flag.CommandLine.Output(), "  %s (uses all defaults)\n", os.Args[0])
+		fmt.Fprintf(flag.CommandLine.Output(), "  QR Code Generation:\n")
+		fmt.Fprintf(flag.CommandLine.Output(), "    %s --type=qrcode --content=\"https://example.com\" --code=\"ABC123\"\n", os.Args[0])
+		fmt.Fprintf(flag.CommandLine.Output(), "    %s --code=\"ABC12345678\" (default type is qrcode)\n", os.Args[0])
+		fmt.Fprintf(flag.CommandLine.Output(), "\n  Image Resizing:\n")
+		fmt.Fprintf(flag.CommandLine.Output(), "    %s --type=resize --width=400 < input.jpg > output.png\n", os.Args[0])
+		fmt.Fprintf(flag.CommandLine.Output(), "    cat image.png | %s --type=resize --width=1200 > resized.png\n", os.Args[0])
 	}
 
 	// Parse command-line flags
@@ -82,29 +187,22 @@ func main() {
 		return
 	}
 
-	// Log the values being used
-	// log.Println("QR Code Content:", *qrcodeContent)
-	// log.Println("Chargepoint Code:", *chargepointCode)
+	var err error
 
-	// Load font
-	face, err := loadEmbeddedFont(100) // 100px like original JS
-	if err != nil {
-		log.Fatal("Failed to load font:", err)
+	switch *operationType {
+	case "qrcode":
+		err = generateQRCode(*qrcodeContent, *chargepointCode)
+	case "resize":
+		err = resizeImageFromStdin(*width)
+	default:
+		fmt.Fprintf(os.Stderr, "Error: Invalid operation type '%s'. Must be 'qrcode' or 'resize'\n", *operationType)
+		flag.Usage()
+		os.Exit(1)
 	}
 
-	// Generate QR code
-	qr, err := qrcode.New(*qrcodeContent, qrcode.Medium)
 	if err != nil {
-		log.Fatal("QR generation failed:", err)
-	}
-
-	// Create QR image and add label
-	qrImage := qr.Image(qrSize)
-	final := drawQRWithLabel(qrImage, *chargepointCode, face)
-
-	err = png.Encode(os.Stdout, final)
-	if err != nil {
-		panic(err)
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
 	}
 }
 

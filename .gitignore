@@ -1,3 +1,9 @@
 *.png
 dist
 node_modules
+
+!assets/logo.png
+
+bin/
+
+*.tgz

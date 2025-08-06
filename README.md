@@ -1,14 +1,40 @@
 # qrimzn
 
-A simple QR code generator library that creates QR codes with custom labels. The library uses a Go binary under the hood for fast QR code generation.
+<div align="center">
+  
+**Pronounced**: "crimson" /ˈkrɪmzən/
+
+**Etymology**: **qr** (QR code) + **im** (image) + **zn** (resize) = **qrimzn** 🎨
+
+</div>
+
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/outranker/qrimzn)
+![GitHub](https://img.shields.io/github/license/outranker/qrimzn)
+![GitHub issues](https://img.shields.io/github/issues/outranker/qrimzn)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/outranker/qrimzn)
+![GitHub contributors](https://img.shields.io/github/contributors/outranker/qrimzn)
+![GitHub stars](https://img.shields.io/github/stars/outranker/qrimzn)
+![GitHub forks](https://img.shields.io/github/forks/outranker/qrimzn)
+![GitHub watchers](https://img.shields.io/github/watchers/outranker/qrimzn)
+![GitHub last commit](https://img.shields.io/github/last-commit/outranker/qrimzn)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/m/outranker/qrimzn)
+
+<div align="center">
+  <img src="./assets/logo.png" alt="qrimzn Logo" width="400" height="200">
+</div>
+
+A fast image processing library that provides QR code generation with custom labels and image resizing capabilities. The library uses a Go binary under the hood for high performance without requiring native dependencies.
 
 ## Features
 
-- Generate QR codes with custom content
-- Add custom labels below QR codes
-- Cross-platform support (Linux, macOS, Windows)
-- Multiple architectures (amd64, arm64)
-- Returns PNG images as Buffer for flexible usage
+- **QR Code Generation**: Create QR codes with custom content and labels
+- **Image Resizing**: Resize images with aspect ratio preservation
+- **No Native Dependencies**: Unlike Sharp, no additional packages needed for Alpine Linux
+- **Cross-platform Support**: Linux, macOS, Windows
+- **Multiple Architectures**: amd64, arm64
+- **High Performance**: Go binary with optimized image processing
+- **Memory Efficient**: Processes images as streams
+- **Format Support**: Supports JPEG, PNG input; outputs PNG
 
 ## Installation
 
@@ -19,6 +45,8 @@ npm install qrimzn
 The installation will automatically download the appropriate binary for your platform.
 
 ## Usage
+
+### QR Code Generation
 
 ```typescript
 import { createQrCode } from "qrimzn";
@@ -33,13 +61,67 @@ fs.writeFileSync("qr.png", buffer);
 // Or upload to cloud storage, etc.
 ```
 
+### Image Resizing
+
+```typescript
+import { resizeImage } from "qrimzn";
+import fs from "fs";
+
+// Read an image file
+const imageBuffer = fs.readFileSync("input.jpg");
+
+// Resize to 400px width (height calculated automatically to maintain aspect ratio)
+const resized400 = await resizeImage(imageBuffer, 400);
+fs.writeFileSync("output-400.png", resized400);
+
+// Multiple sizes
+const sizes = [400, 800, 1200];
+const resizedImages = await Promise.all(
+  sizes.map((width) => resizeImage(imageBuffer, width))
+);
+
+// Works with any image format (JPEG, PNG, etc.) - outputs PNG
+```
+
+### Replacing Sharp
+
+```typescript
+// Before (with Sharp - requires native dependencies)
+import sharp from "sharp";
+const resized = await sharp(buffer)
+  .resize({ width: 400, withoutEnlargement: true, fit: sharp.fit.inside })
+  .toBuffer();
+
+// After (with qrimzn - no native dependencies)
+import { resizeImage } from "qrimzn";
+const resized = await resizeImage(buffer, 400);
+```
+
 ## API
 
 ### `createQrCode(content: string, code: string): Promise<Buffer>`
 
+Generate a QR code with a custom label.
+
 - `content`: The content to encode in the QR code (typically a URL)
 - `code`: The label text to display below the QR code
 - Returns: A Promise that resolves to a Buffer containing the PNG image data
+
+### `resizeImage(buffer: Uint8Array | Buffer, width: number): Promise<Buffer>`
+
+Resize an image while maintaining aspect ratio.
+
+- `buffer`: Image data as Buffer or Uint8Array (supports JPEG, PNG, and other formats)
+- `width`: Target width in pixels (height is calculated automatically)
+- Returns: A Promise that resolves to a Buffer containing the resized PNG image data
+
+**Features:**
+
+- Maintains aspect ratio automatically
+- Never enlarges images (withoutEnlargement: true behavior)
+- Uses high-quality BiLinear interpolation
+- Memory efficient streaming processing
+- No native dependencies required
 
 ## Development
 
@@ -74,6 +156,17 @@ node scripts/install.js
 ```
 
 Note: This requires a corresponding GitHub release to exist.
+
+### Manual Testing in Node.js
+
+```bash
+yarn build
+# this will create a tar.gz file in the root folder
+npm pack
+
+# go to nodejs project in install it
+npm install /Users/my-user/Desktop/libraries/qrimzn/qrimzn-1.1.0.tgz -w package-name
+```
 
 ## Platform Support
 

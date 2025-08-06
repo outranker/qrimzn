@@ -50,7 +50,7 @@ ENTRYPOINT ["/usr/local/bin/qrimzn"]
 ## macos local test run
 
 ```bash
-CGO_ENABLED=0 go build -o qrimzn main.go && strip qrimzn && ./qrimzn --content="https://example.com" --code="ABC12345678" | base64 -d > qr.png
+CGO_ENABLED=0 go build -o qrimzn main.go && strip qrimzn && ./qrimzn --content="https://example.com" --code="ABC12345678" --type=qrcode | base64 -d > qr.png
 ```
 
 ## use it in nodejs
