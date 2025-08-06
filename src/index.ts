@@ -66,7 +66,7 @@ export function createQrCode(content: string, code: string): Promise<Buffer> {
 }
 
 /**
- * Resize an image using the qrimzn Go binary
+ * Resize an image to a given width
  * @param buffer - Image buffer to resize
  * @param width - Target width (height will be calculated to maintain aspect ratio)
  * @returns Promise<Buffer> - Resized image as PNG buffer
