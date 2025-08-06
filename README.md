@@ -19,11 +19,11 @@
 ![GitHub last commit](https://img.shields.io/github/last-commit/outranker/qrimzn)
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/outranker/qrimzn)
 
-<div align="center">
-  <img src="./assets/logo.png" alt="qrimzn Logo" width="400" height="200">
-</div>
+<img src="./assets/logo.png" alt="qrimzn logo" width="140" height="140" align="right">
 
-A fast image processing library that provides QR code generation with custom labels and image resizing capabilities. The library uses a Go binary under the hood for high performance without requiring native dependencies.
+A fast image processing library that provides QR code generation with custom labels and image resizing capabilities. The library uses a Go binary under the hood for high performance without requiring native dependencies. 🚀
+The go library is called by spawning a child process. After the process is spawned, the child process is killed.
+Currently, the library supports very limited functionality. Any contributions are welcome.
 
 ## Features
 
