@@ -1,6 +1,6 @@
 {
   "name": "qrimzn",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Simple image processing and modifying library with limited functionality",
   "type": "module",
   "source": "src/index.ts",
