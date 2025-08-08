@@ -111,8 +111,8 @@ export function resizeImage(
 
     const chunks: Buffer[] = [];
 
-    proc.stdout.on("data", (chunk) => chunks.push(chunk));
-    proc.stderr.on("data", (err) => {
+    proc.stdout.on("data", (chunk: Buffer) => chunks.push(chunk));
+    proc.stderr.on("data", (err: Buffer) => {
       // Go binary logs timing info and format info to stderr, which is expected
       const errStr = err.toString();
       if (
@@ -125,7 +125,7 @@ export function resizeImage(
     });
     proc.on("error", reject);
 
-    proc.on("close", (code) => {
+    proc.on("close", (code: number) => {
       if (code === 0) {
         resolve(Buffer.concat(chunks));
       } else {

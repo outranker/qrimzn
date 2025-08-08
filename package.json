@@ -1,11 +1,12 @@
 {
   "name": "qrimzn",
-  "version": "1.1.6",
+  "version": "1.1.7",
   "description": "Simple image processing and modifying library with limited functionality",
   "source": "src/index.ts",
   "main": "dist/qrimzn.cjs.js",
   "module": "dist/qrimzn.esm.js",
   "types": "dist/declarations/src/index.d.ts",
+  "type": "module",
   "scripts": {
     "build": "preconstruct build",
     "test": "echo \"Error: no test specified\" && exit 1",
