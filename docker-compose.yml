@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  qrimzn-app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./app/output:/app/output
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    container_name: qrimzn-test-app

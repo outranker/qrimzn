@@ -1,40 +1,15 @@
-# qrimzn
+# QRIMZN - Image Processing Library
 
-<div align="center">
-  
-**Pronounced**: "crimson" /ˈkrɪmzən/
-
-**Etymology**: **qr** (QR code) + **im** (image) + **zn** (resize) = **qrimzn** 🎨
-
-</div>
-
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/outranker/qrimzn)
-![GitHub](https://img.shields.io/github/license/outranker/qrimzn)
-![GitHub issues](https://img.shields.io/github/issues/outranker/qrimzn)
-![GitHub pull requests](https://img.shields.io/github/issues-pr/outranker/qrimzn)
-![GitHub contributors](https://img.shields.io/github/contributors/outranker/qrimzn)
-![GitHub stars](https://img.shields.io/github/stars/outranker/qrimzn)
-![GitHub forks](https://img.shields.io/github/forks/outranker/qrimzn)
-![GitHub watchers](https://img.shields.io/github/watchers/outranker/qrimzn)
-![GitHub last commit](https://img.shields.io/github/last-commit/outranker/qrimzn)
-![GitHub commit activity](https://img.shields.io/github/commit-activity/m/outranker/qrimzn)
-
-<img src="./assets/logo.png" alt="qrimzn logo" width="140" height="140" align="right">
-
-A fast image processing library that provides QR code generation with custom labels and image resizing capabilities. The library uses a Go binary under the hood for high performance without requiring native dependencies. 🚀
-The go library is called by spawning a child process. After the process is spawned, the child process is killed.
-Currently, the library supports very limited functionality. Any contributions are welcome.
+A simple image processing and modifying library with limited functionality, featuring a Go binary backend for high-performance image operations.
 
 ## Features
 
-- **QR Code Generation**: Create QR codes with custom content and labels
-- **Image Resizing**: Resize images with aspect ratio preservation
-- **No Native Dependencies**: Unlike Sharp, no additional packages needed for Alpine Linux
-- **Cross-platform Support**: Linux, macOS, Windows
-- **Multiple Architectures**: amd64, arm64
-- **High Performance**: Go binary with optimized image processing
-- **Memory Efficient**: Processes images as streams
-- **Format Support**: Supports JPEG, PNG input; outputs PNG
+- **QR Code Generation**: Generate QR codes with custom labels
+- **Image Resizing**: Resize images to specified widths while maintaining aspect ratio
+- **Multiple Formats**: Support for JPEG, PNG, GIF, BMP, TIFF, WebP
+- **High Performance**: Go binary backend for fast image processing
+- **Cross-Platform**: Works on Linux, macOS, and Windows
+- **Raspberry Pi Compatible**: ARM64 support for Raspberry Pi 4
 
 ## Installation
 
@@ -42,130 +17,126 @@ Currently, the library supports very limited functionality. Any contributions ar
 npm install qrimzn
 ```
 
-The installation will automatically download the appropriate binary for your platform.
-
 ## Usage
 
 ### QR Code Generation
 
-```typescript
+```javascript
 import { createQrCode } from "qrimzn";
 
-// Generate a QR code
-const buffer = await createQrCode("https://example.com", "ABC12345678");
+const qrBuffer = await createQrCode("https://example.com", "ABC12345678");
 
 // Save to file
-import fs from "fs";
-fs.writeFileSync("qr.png", buffer);
-
-// Or upload to cloud storage, etc.
+fs.writeFileSync("qr.png", qrBuffer);
 ```
 
 ### Image Resizing
 
-```typescript
+```javascript
 import { resizeImage } from "qrimzn";
 import fs from "fs";
 
-// Read an image file
+// Read image file
 const imageBuffer = fs.readFileSync("input.jpg");
 
-// Resize to 400px width (height calculated automatically to maintain aspect ratio)
-const resized400 = await resizeImage(imageBuffer, 400);
-fs.writeFileSync("output-400.png", resized400);
+// Resize to 800px width
+const resizedBuffer = await resizeImage(imageBuffer, 800);
 
-// Multiple sizes
-const sizes = [400, 800, 1200];
-const resizedImages = await Promise.all(
-  sizes.map((width) => resizeImage(imageBuffer, width))
-);
-
-// Works with any image format (JPEG, PNG, etc.) - outputs PNG
+// Save resized image
+fs.writeFileSync("resized.png", resizedBuffer);
 ```
 
-### Replacing Sharp
-
-```typescript
-// Before (with Sharp - requires native dependencies)
-import sharp from "sharp";
-const resized = await sharp(buffer)
-  .resize({ width: 400, withoutEnlargement: true, fit: sharp.fit.inside })
-  .toBuffer();
-
-// After (with qrimzn - no native dependencies)
-import { resizeImage } from "qrimzn";
-const resized = await resizeImage(buffer, 400);
-```
-
-## API
+## API Reference
 
 ### `createQrCode(content: string, code: string): Promise<Buffer>`
 
-Generate a QR code with a custom label.
+Generates a QR code with a label.
 
-- `content`: The content to encode in the QR code (typically a URL)
-- `code`: The label text to display below the QR code
-- Returns: A Promise that resolves to a Buffer containing the PNG image data
+- **content**: The URL or text to encode in the QR code
+- **code**: The label text to display below the QR code
+- **Returns**: A Promise that resolves to a Buffer containing the PNG image data
 
 ### `resizeImage(buffer: Uint8Array | Buffer, width: number): Promise<Buffer>`
 
-Resize an image while maintaining aspect ratio.
+Resizes an image to the specified width.
 
-- `buffer`: Image data as Buffer or Uint8Array (supports JPEG, PNG, and other formats)
-- `width`: Target width in pixels (height is calculated automatically)
-- Returns: A Promise that resolves to a Buffer containing the resized PNG image data
+- **buffer**: Image data as Buffer or Uint8Array
+- **width**: Target width in pixels (height calculated automatically)
+- **Returns**: A Promise that resolves to a Buffer containing the resized PNG image data
 
-**Features:**
+## Test Application
 
-- Maintains aspect ratio automatically
-- Never enlarges images (withoutEnlargement: true behavior)
-- Uses high-quality BiLinear interpolation
-- Memory efficient streaming processing
-- No native dependencies required
+A complete NestJS test application is included in the `app/` directory that demonstrates the library usage.
+
+### Running the Test App
+
+1. **Place your test image:**
+
+   ```bash
+   mkdir -p ~/Desktop/images
+   # Copy your bergenhordalandnorwayvagen.jpg to ~/Desktop/images/
+   ```
+
+2. **Build the Go binary for Raspberry Pi:**
+
+   ```bash
+   cd go
+   GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o ../bin/qrimzn main.go
+   ```
+
+3. **Build and run the Docker application:**
+
+   ```bash
+   cd app
+   ./build-docker.sh
+   docker run -p 3000:3000 -v $(pwd)/output:/app/output qrimzn-test-app
+   ```
+
+4. **Test the application:**
+   ```bash
+   curl http://localhost:3000/test
+   ```
+
+The test application will:
+
+- Copy the test image from `~/Desktop/images/bergenhordalandnorwayvagen.jpg` during Docker build
+- Create three versions: 400px, 800px, and 1200px width
+- Save the results to `./output/` directory
+
+### Docker Support
+
+The application is containerized and ready to run on Raspberry Pi 4:
+
+```bash
+# Build the image
+cd app
+./build-docker.sh
+
+# Run on Raspberry Pi
+docker run -p 3000:3000 \
+  -v $(pwd)/output:/app/output \
+  qrimzn-test-app
+```
 
 ## Development
 
-### Building the Go binary
-
-The Go binary is built automatically using GitHub Actions. To build manually:
+### Building the Go Binary
 
 ```bash
 cd go
 go mod tidy
-go build -o qrimzn main.go
+
+# Build for current platform
+CGO_ENABLED=0 go build -o ../bin/qrimzn main.go
+
+# Build for Raspberry Pi (ARM64)
+GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o ../bin/qrimzn main.go
 ```
 
-### Release Process
-
-1. Update version in `package.json`
-2. Run the build and release script:
-   ```bash
-   ./scripts/release.sh v1.0.0
-   ```
-3. The script will:
-   - Build binaries for all supported platforms
-   - Create compressed archives
-   - Upload to GitHub releases
-
-### Manual Installation Testing
-
-To test the installation script without publishing:
+### Building the TypeScript Package
 
 ```bash
-node scripts/install.js
-```
-
-Note: This requires a corresponding GitHub release to exist.
-
-### Manual Testing in Node.js
-
-```bash
-yarn build
-# this will create a tar.gz file in the root folder
-npm pack
-
-# go to nodejs project in install it
-npm install /Users/my-user/Desktop/libraries/qrimzn/qrimzn-1.1.0.tgz -w package-name
+npm run build
 ```
 
 ## Platform Support
@@ -173,6 +144,7 @@ npm install /Users/my-user/Desktop/libraries/qrimzn/qrimzn-1.1.0.tgz -w package-
 - **Linux**: amd64, arm64
 - **macOS**: amd64, arm64
 - **Windows**: amd64
+- **Raspberry Pi**: arm64
 
 ## License
 
