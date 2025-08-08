@@ -2,7 +2,7 @@
 set -e
 
 APP_NAME=qrimzn
-DIST_DIR=dist
+DIST_DIR=release-binaries
 TAG=${1:-"v1.0.0"}
 
 # Clean previous builds
