@@ -6,7 +6,6 @@
   "main": "dist/qrimzn.cjs.js",
   "module": "dist/qrimzn.esm.js",
   "types": "dist/declarations/src/index.d.ts",
-  "type": "module",
   "scripts": {
     "build": "preconstruct build",
     "test": "echo \"Error: no test specified\" && exit 1",
