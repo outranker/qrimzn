@@ -26,9 +26,15 @@ for platform in "${platforms[@]}"; do
   [ "$GOOS" == "windows" ] && output_name+='.exe'
 
   mkdir -p "$output_dir"
-  echo "🔧 Building $APP_NAME for $GOOS/$GOARCH..."
+  echo "🔧 Building $APP_NAME for $GOOS/$GOARCH with memory optimizations..."
   cd go
-  GOOS=$GOOS GOARCH=$GOARCH CGO_ENABLED=0 go build -o "../$output_dir/$output_name" main.go
+  # Build with memory optimizations for production
+  GOOS=$GOOS GOARCH=$GOARCH CGO_ENABLED=0 \
+    GOGC=25 GOMEMLIMIT=200MiB \
+    go build \
+      -ldflags="-s -w" \
+      -gcflags="-l=4" \
+      -o "../$output_dir/$output_name" main.go
   cd ..
 
   # Create compressed tarball or zip for each platform

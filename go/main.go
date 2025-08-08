@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"image"
@@ -9,6 +10,7 @@ import (
 	"image/png"
 	"io"
 	"os"
+	"runtime"
 
 	_ "embed"
 	_ "image/gif"
@@ -119,8 +121,9 @@ func generateQRCode(content, code string) error {
 }
 
 func resizeImageFromStdin(width int) error {
-	// start := time.Now()
-
+	// Force garbage collection before processing
+	runtime.GC()
+	
 	// Check if stdin has data
 	stat, err := os.Stdin.Stat()
 	if err != nil {
@@ -132,28 +135,54 @@ func resizeImageFromStdin(width int) error {
 
 	fmt.Fprintf(os.Stderr, "Reading image data from stdin...\n")
 
+	// Use buffered reader for more efficient memory usage
+	bufferedStdin := bufio.NewReader(os.Stdin)
+	
 	// Read image from stdin
-	img, err := decodeImage(os.Stdin)
+	img, err := decodeImage(bufferedStdin)
 	if err != nil {
 		return err
 	}
 
+	// Force garbage collection after decoding
+	runtime.GC()
+
 	// Resize the image
 	resized := resizeImage(img, width)
+	
+	// Clear the original image reference to free memory immediately
+	img = nil
+	runtime.GC()
 
-	// Encode as PNG to stdout
-	err = png.Encode(os.Stdout, resized)
+	// Encode as PNG to stdout with maximum compression
+	encoder := png.Encoder{
+		CompressionLevel: png.BestCompression,
+	}
+	err = encoder.Encode(os.Stdout, resized)
 	if err != nil {
 		return fmt.Errorf("failed to encode resized image: %v", err)
 	}
 
-	// end := time.Now()
-	// log.Printf("resizeImg %d took %d ms", width, end.Sub(start).Milliseconds())
+	// Clear resized image and force final garbage collection
+	resized = nil
+	runtime.GC()
 
 	return nil
 }
 
 func main() {
+	// Configure Go runtime for better memory management in containers
+	// Set lower memory limit for Alpine containers
+	if os.Getenv("GOMEMLIMIT") == "" {
+		// Use 200MB for production containers with 256MB limit
+		os.Setenv("GOMEMLIMIT", "200MiB")
+	}
+	
+	// Enable memory ballast for more predictable GC behavior
+	if os.Getenv("GOGC") == "" {
+		os.Setenv("GOGC", "25") // More aggressive GC for tight memory constraints
+	}
+	
 	// Define command-line flags
 	var (
 		operationType   = flag.String("type", "qrcode", "Operation type: 'qrcode' or 'resize'")

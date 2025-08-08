@@ -43,14 +43,19 @@ export function createQrCode(content: string, code: string): Promise<Buffer> {
   }
 
   return new Promise((resolve, reject) => {
-    const proc = spawn(binaryPath, [
-      "--type",
-      "qrcode",
-      "--content",
-      content,
-      "--code",
-      code,
-    ]);
+    // Set memory-optimized environment variables for the child process
+    const env = {
+      ...process.env,
+      GOGC: "25",
+      GOMEMLIMIT: "200MiB",
+      GOMAXPROCS: "1",
+    };
+
+    const proc = spawn(
+      binaryPath,
+      ["--type", "qrcode", "--content", content, "--code", code],
+      { env }
+    );
 
     const chunks: Buffer[] = [];
 
@@ -90,12 +95,19 @@ export function resizeImage(
   }
 
   return new Promise((resolve, reject) => {
-    const proc = spawn(binaryPath, [
-      "--type",
-      "resize",
-      "--width",
-      width.toString(),
-    ]);
+    // Set memory-optimized environment variables for the child process
+    const env = {
+      ...process.env,
+      GOGC: "25",
+      GOMEMLIMIT: "200MiB",
+      GOMAXPROCS: "1",
+    };
+
+    const proc = spawn(
+      binaryPath,
+      ["--type", "resize", "--width", width.toString()],
+      { env }
+    );
 
     const chunks: Buffer[] = [];
 
